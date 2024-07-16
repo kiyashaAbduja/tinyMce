@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinyMCE with MathJax</title>
+    <script
+      src="./tinymce/js/tinymce/tinymce.min.js"
+      referrerpolicy="origin"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.js"></script>
+    <link
+      id="css-theme"
+      rel="stylesheet"
+      type="text/css"
+      href="/css-theme.css?64953f658e6744c6678ebe8328bab69d90a9dcd8"
+    />
+    <script
+      id="scripts"
+      type="text/javascript"
+      src="/scripts.js?887a5339b2625a8970658c4f5f9bd94f1067ab7a"
+    ></script>
+    <meta name="referrer" content="same-origin" />
+
+    <link
+      rel="icon"
+      sizes="16x16"
+      type="image/png"
+      href="assets/favicon_16.png"
+    />
+    <link
+      rel="icon"
+      sizes="32x32"
+      type="image/png"
+      href="assets/favicon_32.png"
+    />
+    <link
+      rel="icon"
+      sizes="any"
+      type="image/svg+xml"
+      href="assets/favicon.svg"
+    />
+    <title>theone</title>
+    <meta name="application-name" content="theone" />
+    <meta name="apple-mobile-web-app-title" content="theone" />
+    <meta http-equiv="content-language" content="" />
+    <meta name="language" content="" />
+    <meta name="robots" content="INDEX,FOLLOW" />
+    <meta name="msvalidate.01" content="" />
+    <meta name="google-site-verification" content="" />
+    <meta property="fb:app_id" content="" />
+
+    <base href="/" />
+    <style>
+      .math-popup {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .math-popup label {
+        font-weight: bold;
+      }
+      .math-popup input,
+      .math-popup textarea {
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        width: 100%;
+      }
+      .math-popup button {
+        padding: 5px 10px;
+        border: none;
+        border-radius: 4px;
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+      }
+      .math-popup button:hover {
+        background-color: #0056b3;
+      }
+      .math-popup .button-group {
+        display: flex;
+        gap: 10px;
+      }
+      .math-formula {
+        display: inline-block;
+        margin: 0 2px;
+        font-size: 1em !important;
+        background-color: #f0f0f0;
+        padding: 2px 5px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea></textarea>
+
+    <script>
+      tinymce.init({
+        selector: "textarea", // change this value according to your HTML
+        plugins: "mathjax",
+        toolbar: "mathjax",
+        setup: function (editor) {
+          editor.ui.registry.addButton("mathjax", {
+            text: "Insert Math",
+            onAction: function () {
+              editor.windowManager.open({
+                title: "Insert Math",
+                body: {
+                  type: "panel",
+                  items: [
+                    {
+                      type: "textarea",
+                      name: "math",
+                      label: "Math",
+                      classes: "math-popup",
+                      multiline: true,
+                      placeholder: "Enter LaTeX formula here...",
+                    },
+                  ],
+                },
+                buttons: [
+                  {
+                    type: "cancel",
+                    text: "Close",
+                    classes: "math-popup button-group",
+                  },
+                  {
+                    type: "submit",
+                    text: "Insert",
+                    primary: true,
+                    classes: "math-popup button-group",
+                  },
+                ],
+                onSubmit: function (api) {
+                  var data = api.getData();
+                  editor.insertContent(
+                    `<span class="math-formula">\\(${data.math}\\)</span>`
+                  );
+                  MathJax.typesetPromise();
+                  api.close();
+                },
+              });
+            },
+          });
+        },
+        content_style: `
+          .mce-content-body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+          }
+          span.math-formula {
+            background: #eee;
+            padding: 2px;
+          }
+        `,
+      });
+
+      document.addEventListener("DOMContentLoaded", function () {
+        tinymce.init({
+          selector: "textarea",
+          plugins: "mathjax",
+          toolbar: "mathjax",
+          setup: function (editor) {
+            editor.on("change", function () {
+              MathJax.typesetPromise();
+            });
+          },
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TinyMCE with MathJax Example</title>
+
+    <!-- Include TinyMCE script -->
+    <script src="./tinymce/js/tinymce/tinymce.min.js"></script>
+
+    <!-- Include MathJax from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Include custom styles -->
+    <style>
+      p.math-formula {
+        display: inline-block;
+        text-align: center !important;
+        margin: 0 2px !important;
+        font-size: 1em !important;
+        background-color: #f0f0f0 !important;
+        padding: 2px 5px !important;
+        border-radius: 4px !important;
+      }
+    </style>
+
+    <script>
+      let selectedFormulaElement = null;
+
+      // Initialize TinyMCE
+      tinymce.init({
+        selector: "textarea", // Replace with your selector as needed
+        toolbar:
+          "undo redo | bold italic | alignleft aligncenter alignright | addMaths",
+        height: 400,
+        setup: function (editor) {
+          // Register the custom 'addMaths' button
+          editor.ui.registry.addButton("addMaths", {
+            text: "Add Maths",
+            onAction: function () {
+              openMathPopup(editor);
+            },
+          });
+
+          editor.on("init", function () {
+            // Example content with math formulas
+            editor.setContent(
+              `<p>Insert your math formula here: <p class="math-formula" style="text-align:center">\\[ x^n + y^n = z^n \\]</p> and another formula: <p class="math-formula" style="text-align:center">\\( E=mc^2 \\)</p></p>`
+            );
+
+            // Render MathJax when content is loaded
+            renderMathJax(editor.getContent());
+          });
+
+          editor.on("change", function () {
+            // Re-render MathJax when content changes
+            renderMathJax(editor.getContent());
+          });
+
+          editor.on("click", function (e) {
+            if (e.target.className.includes("math-formula")) {
+              selectedFormulaElement = e.target;
+              const formula = e.target.getAttribute("data-formula");
+              openMathPopup(editor, formula);
+            } else {
+              selectedFormulaElement = null;
+            }
+          });
+
+          function renderMathJax(content) {
+            // Reset MathJax and typeset all equations
+            MathJax.typesetClear();
+            MathJax.typesetPromise([editor.getBody()]).catch(function (err) {
+              editor.setContent(content); // Restore content if typesetting fails
+            });
+          }
+
+          function openMathPopup(editor, formula = "") {
+            const content = `
+              <div style="display: flex; flex-direction: column; gap: 15px; padding: 20px 10px; background-color: #ffffff; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); border-radius: 8px; width: full;">
+                <label for="mathInput" style="font-weight: bold; color: #333333;">Enter LaTeX Math Formula:</label>
+                <input type="text" id="mathInput" value="${formula}" style="padding: 10px; border: 1px solid #ccc; border-radius: 4px; width: 100%; font-size: 16px;" />
+                <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                  <button id="insertMath" style="padding: 10px 15px; border: none; border-radius: 4px; background-color: #007bff; color: white; cursor: pointer; font-size: 14px;">Insert</button>
+                  <button id="closePopup" style="padding: 10px 15px; border: none; border-radius: 4px; background-color: #007bff; color: white; cursor: pointer; font-size: 14px;">Close</button>
+                </div>
+              </div>
+            `;
+
+            const popup = editor.windowManager.open({
+              title: "Insert Math Formula",
+              body: {
+                type: "panel",
+                items: [
+                  {
+                    type: "htmlpanel",
+                    html: content,
+                  },
+                ],
+              },
+              buttons: [],
+              onAction: function (api, details) {
+                if (details.name === "insertMath") {
+                  const mathFormula =
+                    document.getElementById("mathInput").value;
+                  if (selectedFormulaElement) {
+                    selectedFormulaElement.textContent = `\\(${mathFormula}\\)`;
+                    selectedFormulaElement.setAttribute(
+                      "data-formula",
+                      mathFormula
+                    );
+                  } else {
+                    editor.insertContent(
+                      `<p class="math-formula" style="text-align:center" data-formula="${mathFormula}">\\(${mathFormula}\\)</p>`
+                    );
+                  }
+                  renderMathJax(editor.getContent());
+                  api.close();
+                  selectedFormulaElement = null;
+                } else if (details.name === "closePopup") {
+                  api.close();
+                  selectedFormulaElement = null;
+                }
+              },
+            });
+
+            // Add event listeners for the buttons
+            document
+              .getElementById("insertMath")
+              .addEventListener("click", function () {
+                const mathFormula = document.getElementById("mathInput").value;
+                if (selectedFormulaElement) {
+                  selectedFormulaElement.textContent = `\\(${mathFormula}\\)`;
+                  selectedFormulaElement.setAttribute(
+                    "data-formula",
+                    mathFormula
+                  );
+                } else {
+                  editor.insertContent(
+                    `<p class="math-formula"style="text-align:center"  data-formula="${mathFormula}">\\(${mathFormula}\\)</p>`
+                  );
+                }
+                renderMathJax(editor.getContent());
+                popup.close();
+                selectedFormulaElement = null;
+              });
+
+            document
+              .getElementById("closePopup")
+              .addEventListener("click", function () {
+                popup.close();
+                selectedFormulaElement = null;
+              });
+          }
+        },
+        content_style: `
+      .mce-content-body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+      }
+      span.math-tex {
+        background: #eee;
+        padding: 2px;
+      }
+    `,
+      });
+    </script>
+  </head>
+  <body>
+    <h1>TinyMCE with MathJax Example</h1>
+    <textarea></textarea>
+  </body>
+</html>
